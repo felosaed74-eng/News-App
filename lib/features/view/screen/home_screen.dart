@@ -1,17 +1,35 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart';
-import 'package:news_app/core/routes/app_routes.dart';
+import 'dart:developer';
 
-class HomeScreen extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:news_app/core/network/api_result.dart';
+import 'package:news_app/features/data/api/app_api.dart';
+import 'package:news_app/features/data/model/news_model.dart';
+import 'package:news_app/features/view/widgets/new_item_widget.dart';
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<Article> article = [];
+  bool isLoading = true;
+  String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    geAllArticles();
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xff202020),
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor: Color.fromARGB(255, 121, 10, 2),
+        backgroundColor: Color.fromARGB(232, 22, 1, 111),
         title: Text(
           "News",
           style: TextStyle(
@@ -22,78 +40,34 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
 
-      body: ListView.separated(
-        padding: EdgeInsets.symmetric(horizontal: 16),
-        itemBuilder: (context, index) => NewsItem(),
-        separatorBuilder: (context, index) => SizedBox(height: 15),
-        itemCount: 10,
-      ),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : error != null
+          ? Text(error ?? "", style: TextStyle(fontSize: 20, color: Colors.red))
+          : ListView.separated(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              itemBuilder: (context, index) =>
+                  NewsItem(article: article[index]),
+              separatorBuilder: (context, index) => SizedBox(height: 15),
+              itemCount: article.length,
+            ),
     );
   }
-}
 
-class NewsItem extends StatelessWidget {
-  const NewsItem({super.key});
+  void geAllArticles() async {
+    isLoading = true;
+    final result = await AppApi.getNews();
+    switch (result) {
+      case Success<NewsModel>():
+        log("Success State ${result.data.articles}");
+        article = result.data.articles ?? [];
+      case Error<NewsModel>():
+        log("Error State ${result.error}");
+        error = result.error;
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        Navigator.of(context).pushNamed(AppRoutes.details);
-      },
-      child: Container(
-        padding: EdgeInsets.all(8),
-        child: Column(
-          crossAxisAlignment: .start,
-          children: [
-            SizedBox(height: 8),
-            CustomImageNews(),
-            SizedBox(height: 8),
-            Text(
-              "Ninja",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: .w400,
-                color: Color(0xffB0B3B8),
-              ),
-            ),
-            SizedBox(height: 4),
-            Text(
-              "Ninja is very strong",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: .w400,
-                color: Color(0xffE4E6EB),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class CustomImageNews extends StatelessWidget {
-  const CustomImageNews({super.key, this.hight = 200});
-
-  final double hight;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadiusGeometry.circular(12),
-      child: CachedNetworkImage(
-        imageUrl: image,
-        placeholder: (context, url) => Column(
-          mainAxisAlignment: .center,
-          children: [CircularProgressIndicator()],
-        ),
-        errorWidget: (context, url, error) => Icon(Icons.error),
-        width: double.infinity,
-        height: hight,
-        fit: .cover,
-      ),
-    );
+    isLoading = false;
+    setState(() {});
   }
 }
 
