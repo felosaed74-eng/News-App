@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:news_app/features/data/model/news_model.dart';
-import 'package:news_app/features/view/screen/home_screen.dart';
-import 'package:news_app/features/view/widgets/custom-image_news_widget.dart';
+import 'package:news_app/features/presentation/view/screen/home_screen.dart';
+import 'package:news_app/features/presentation/view/widgets/custom-image_news_widget.dart';
 
 class DetailsScreen extends StatelessWidget {
   const DetailsScreen({super.key});
